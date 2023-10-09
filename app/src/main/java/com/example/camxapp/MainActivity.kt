@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -28,13 +29,19 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.rememberBottomSheetScaffoldState
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.camxapp.ui.theme.CamXAppTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -56,12 +63,17 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 }
+                val scope = rememberCoroutineScope()
+                val viewModel = viewModel<MainViewModel>()
+                val bitmaps by viewModel.bitmaps.collectAsState()
+
                 BottomSheetScaffold(
                     scaffoldState = scaffoldState,
                     sheetPeekHeight = 0.dp,
                     sheetContent = {
                         PhotoBottomSheetContent(
-                            bitmaps =
+                            bitmaps = bitmaps,
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
                 ) {padding ->
@@ -95,7 +107,9 @@ class MainActivity : ComponentActivity() {
                             horizontalArrangement = Arrangement.SpaceAround
                         ){
                             IconButton(onClick = {
-
+                                scope.launch {
+                                    scaffoldState.bottomSheetState.expand()
+                                }
                             }) {
                                 Icon(
                                     imageVector = Icons.Default.Photo,
@@ -103,7 +117,10 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                             IconButton(onClick = {
-
+                                takePhoto(
+                                    controller = controller,
+                                    onPhotoTaken = viewModel::onTakePhoto
+                                )
                             }) {
                                 Icon(
                                     imageVector = Icons.Default.PhotoCamera,
